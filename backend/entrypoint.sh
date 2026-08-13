@@ -1,17 +1,9 @@
-#!/bin/bash
-
+#!/bin/sh
 echo "DB Connection --- Establishing . . ."
 
-while ! nc -z db 5432; do
-
-    echo "DB Connection -- Failed!"
-
-    sleep 1
-
-    echo "DB Connection -- Retrying . . ."
-
+while ! nc -z "$POSTGRES_HOST" "$POSTGRES_PORT"; do
+  sleep 1
 done
 
-echo "DB Connection --- Successfully Established!"
-
+echo "DB Connection --- Established"
 exec "$@"

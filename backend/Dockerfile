@@ -1,40 +1,41 @@
-# Pull official latest Python Docker image (Pulished with version 3.11.0)
-FROM --platform=linux/amd64 python:latest
+# Use a fixed Python version so builds do not change unexpectedly
+FROM python:3.11-slim
 
-# Set the working directory
+# Folder inside the container where the backend code will run
 WORKDIR /usr/backend
 
-# Set up Python behaviour
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV VIRTUAL_ENV=/opt/venv
+# Python/container settings
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
-# Switch on virtual environment
+# Create a Python virtual environment inside the container
 RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Set the server port
+# The FastAPI application listens on port 8000 inside the container
 EXPOSE 8000
 
-# Install system dependencies
+# Install Linux tools required by entrypoint.sh and PostgreSQL connectivity
 RUN apt-get update \
-  && apt-get -y install netcat gcc postgresql \
-  && apt-get clean
+    && apt-get install -y --no-install-recommends netcat-openbsd gcc postgresql \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --upgrade pip
+# Install Python packages
 COPY ./requirements.txt ./
-RUN pip3 install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Copy all files
+# Copy backend application source code into the container
 COPY . .
 
-# Copy entrypoint.sh for auto connection with account_db service
-COPY ./entrypoint.sh .
-RUN chmod +x /usr/backend/entrypoint.sh
+# Run setup/start script before FastAPI starts
+# Convert Windows line endings, then run setup/start script
+RUN sed -i 's/\r$//' /usr/backend/entrypoint.sh \
+    && chmod +x /usr/backend/entrypoint.sh
 
-# Execute entrypoint.sh
-ENTRYPOINT ["/usr/backend/entrypoint.sh" ]
+ENTRYPOINT ["/bin/sh", "/usr/backend/entrypoint.sh"]
 
-# Start up the backend server
-CMD uvicorn src.main:backend_app --reload --workers 4 --host 0.0.0.0 --port 8000
+# Start FastAPI
+CMD ["uvicorn", "src.main:backend_app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

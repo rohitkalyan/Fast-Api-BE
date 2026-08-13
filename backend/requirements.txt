@@ -24,6 +24,7 @@ pytest
 pytest-asyncio
 pytest-cov
 pytest-xdist
+pydantic==1.10.24
 SQLAlchemy==2.0.0b3
 trio
 uvicorn
