@@ -19,3 +19,8 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: fast-api-be-config
+            - secretRef:
+                name: fast-api-be-secret

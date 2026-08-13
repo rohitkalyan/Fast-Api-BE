@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fast-api-be-config
+  namespace: default
+data:
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_NAME: account_db
+  POSTGRES_SCHEMA: postgresql
+  BACKEND_HOST: 0.0.0.0
+  BACKEND_PORT: "8000"
+  BACKEND_WORKERS: "1"
